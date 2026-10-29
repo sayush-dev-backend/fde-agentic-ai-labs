@@ -313,7 +313,7 @@ def demo() -> None:
     session_manager = SessionManager()
     long_term_memory = LongTermMemory()
 
-    print("\\nCASE 1 — Authorized caller")
+    print("\nCASE 1 — Authorized caller")
     print(run_agent(
         "Why is payment-api slow?",
         principal_role="on_call_engineer",
@@ -323,7 +323,7 @@ def demo() -> None:
         user_id="demo-user",
     ))
 
-    print("\\nCASE 2 — Unauthorized caller")
+    print("\nCASE 2 — Unauthorized caller")
     print(run_agent(
         "Why is payment-api slow?",
         principal_role="customer",
@@ -333,7 +333,7 @@ def demo() -> None:
         user_id="demo-user",
     ))
 
-    print("\\nCASE 3 — Save and recall a preference across sessions")
+    print("\nCASE 3 — Save and recall a preference across sessions")
     print(run_agent(
         "My preferred programming language is Python.",
         principal_role="customer",
