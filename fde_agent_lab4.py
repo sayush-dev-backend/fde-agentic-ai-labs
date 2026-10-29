@@ -32,7 +32,7 @@ _PREFERRED_LANGUAGE_KEY = "preferred_programming_language"
 def _extract_preferred_language(user_input: str) -> str | None:
     """Extract a preference only from an explicit, narrow statement."""
     match = re.search(
-        r"\bmy\s+preferred\s+programming\s+language\s+(?:is|=)\s*([A-Za-z][A-Za-z0-9+#.-]*)(?=\s|[.,!?;:]|$)",
+        r"\bmy\s+preferred\s+programming\s+language\s+(?:is|=)\s*([A-Za-z][A-Za-z0-9+#-]*)(?=\s|[.,!?;:]|$)",
         user_input,
         flags=re.IGNORECASE,
     )
