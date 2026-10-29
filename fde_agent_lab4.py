@@ -10,14 +10,55 @@ Python 3.10+
 No third-party dependencies required.
 """
 
+import re
 import time
 from typing import Any, Callable
 
 from fde_agent_lab1 import execute_tool
 from fde_memory_lab1 import SessionManager
+from fde_memory_lab2 import LongTermMemory
 
 
 MAX_STEPS = 3
+
+
+
+
+# ---------- 1a. Long-term memory routing ----------
+
+_PREFERRED_LANGUAGE_KEY = "preferred_programming_language"
+
+
+def _extract_preferred_language(user_input: str) -> str | None:
+    """Extract a preference only from an explicit, narrow statement."""
+    match = re.search(
+        r"\\bmy\\s+preferred\\s+programming\\s+language\\s+(?:is|=)\\s*([A-Za-z][A-Za-z0-9+#.-]*)\\b?",
+        user_input,
+        flags=re.IGNORECASE,
+    )
+    if match is None:
+        return None
+    return match.group(1).strip().rstrip(".,!?;:")
+
+
+def _asks_for_preferred_language(user_input: str) -> bool:
+    """Recognize direct questions about the saved language preference."""
+    normalized = user_input.casefold()
+    mentions_preference = "preferred programming language" in normalized
+    asks_question = any(
+        phrase in normalized
+        for phrase in ("what", "which", "tell me", "do you know", "remember")
+    )
+    return mentions_preference and asks_question
+
+
+def _persist_memory_response(
+    session_manager: SessionManager,
+    session_id: str,
+    content: str,
+) -> str:
+    session_manager.add_assistant_message(session_id, content)
+    return content
 
 
 # ---------- 1. Simulated LLM ----------
@@ -114,6 +155,8 @@ def run_agent(
     principal_role: str,
     session_id: str,
     session_manager: SessionManager,
+    long_term_memory: LongTermMemory | None = None,
+    user_id: str | None = None,
 ) -> str:
     """
     Run the agent using a trusted application-supplied role.
@@ -141,6 +184,40 @@ def run_agent(
         session_id,
         user_input,
     )
+
+    # Long-term memory is scoped to the authenticated application user.
+    # Keep this deterministic routing outside simulated_llm: storage access
+    # belongs to the orchestration layer, not to model-generated decisions.
+    if long_term_memory is not None:
+        if not isinstance(user_id, str) or not user_id.strip():
+            raise ValueError(
+                "A trusted, non-empty user_id is required when long-term memory is enabled"
+            )
+
+        preferred_language = _extract_preferred_language(user_input)
+        if preferred_language is not None:
+            long_term_memory.remember(
+                user_id,
+                _PREFERRED_LANGUAGE_KEY,
+                preferred_language,
+            )
+            return _persist_memory_response(
+                session_manager,
+                session_id,
+                f"I'll remember that your preferred programming language is {preferred_language}.",
+            )
+
+        if _asks_for_preferred_language(user_input):
+            saved_language = long_term_memory.recall(
+                user_id,
+                _PREFERRED_LANGUAGE_KEY,
+            )
+            if saved_language is None:
+                content = "I don't have your preferred programming language saved yet."
+            else:
+                content = f"Your preferred programming language is {saved_language}."
+            return _persist_memory_response(session_manager, session_id, content)
+
 
     for step in range(MAX_STEPS):
 
@@ -239,6 +316,7 @@ def run_agent(
 
 def demo() -> None:
     session_manager = SessionManager()
+    long_term_memory = LongTermMemory()
 
     print("\nCASE 1 — Authorized caller")
 
@@ -258,9 +336,29 @@ def demo() -> None:
         principal_role="customer",
         session_id=session_manager.create_session(),
         session_manager=session_manager,
+        long_term_memory=long_term_memory,
+        user_id="demo-user",
     )
 
     print(answer)
+
+    print("\\nCASE 3 — Save and recall a preference across sessions")
+    print(run_agent(
+        "My preferred programming language is Python.",
+        principal_role="customer",
+        session_id=session_manager.create_session(),
+        session_manager=session_manager,
+        long_term_memory=long_term_memory,
+        user_id="demo-user",
+    ))
+    print(run_agent(
+        "What is my preferred programming language?",
+        principal_role="customer",
+        session_id=session_manager.create_session(),
+        session_manager=session_manager,
+        long_term_memory=long_term_memory,
+        user_id="demo-user",
+    ))
 
 
 if __name__ == "__main__":
