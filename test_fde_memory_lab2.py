@@ -38,6 +38,13 @@ class TestLongTermMemory(unittest.TestCase):
             "Rust",
         )
 
+    def test_memory_isolation_between_instances(self):
+        first = LongTermMemory()
+        second = LongTermMemory()
+        first.remember("user-1", "key", "value")
+        self.assertEqual(first.recall("user-1", "key"), "value")
+        self.assertIsNone(second.recall("user-1", "key"))
+
     def test_users_are_isolated(self):
         self.memory.remember("user-1", "preferred_language", "Python")
         self.memory.remember("user-2", "preferred_language", "Java")
