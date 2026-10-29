@@ -171,28 +171,23 @@ def run_agent(
     #         "content": user_input,
     #     }
     # ]
-    messages = session_manager.get_history(session_id)
-
-    new_message = {
-        "role": "user",
-        "content": user_input,
-    }
-
-    messages.append(new_message)
-
-    session_manager.add_user_message(
-        session_id,
-        user_input,
-    )
-
-    # Long-term memory is scoped to the authenticated application user.
-    # Keep this deterministic routing outside simulated_llm: storage access
-    # belongs to the orchestration layer, not to model-generated decisions.
+    # Validate trusted identity before persisting the user's message.
     if long_term_memory is not None:
         if not isinstance(user_id, str) or not user_id.strip():
             raise ValueError(
                 "A trusted, non-empty user_id is required when long-term memory is enabled"
             )
+
+    messages = session_manager.get_history(session_id)
+    messages.append({
+        "role": "user",
+        "content": user_input,
+    })
+    session_manager.add_user_message(session_id, user_input)
+
+    # Keep deterministic storage access in the orchestration layer,
+    # not inside model-generated decisions.
+    if long_term_memory is not None:
 
         preferred_language = _extract_preferred_language(user_input)
         if preferred_language is not None:
