@@ -15,6 +15,7 @@ from typing import Any, Callable
 
 from fde_agent_lab1 import execute_tool
 from fde_memory_lab1 import SessionManager
+from fde_memory_lab2 import LongTermMemory
 
 
 MAX_STEPS = 3
@@ -114,6 +115,8 @@ def run_agent(
     principal_role: str,
     session_id: str,
     session_manager: SessionManager,
+    long_term_memory: LongTermMemory,
+    user_id: str,
 ) -> str:
     """
     Run the agent using a trusted application-supplied role.
@@ -239,6 +242,7 @@ def run_agent(
 
 def demo() -> None:
     session_manager = SessionManager()
+    long_term_memory = LongTermMemory()
 
     print("\nCASE 1 — Authorized caller")
 
@@ -247,6 +251,8 @@ def demo() -> None:
         principal_role="on_call_engineer",
         session_id=session_manager.create_session(),
         session_manager=session_manager,
+        long_term_memory=long_term_memory,
+        user_id="user_001"
     )
 
     print(answer)
@@ -258,6 +264,8 @@ def demo() -> None:
         principal_role="customer",
         session_id=session_manager.create_session(),
         session_manager=session_manager,
+        long_term_memory=long_term_memory,
+        user_id="user_002"
     )
 
     print(answer)
