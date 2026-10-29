@@ -14,6 +14,7 @@ import time
 from typing import Any, Callable
 
 from fde_agent_lab1 import execute_tool
+from fde_memory_lab1 import SessionManager
 
 
 MAX_STEPS = 3
@@ -30,10 +31,21 @@ def simulated_llm(
     """
 
     # Find tool results in the conversation history.
+    latest_user_index = max(
+        (
+            index
+            for index, message in enumerate(messages)
+            if message.get("role") == "user"
+        ),
+        default=-1,
+    )
+
+    current_turn_messages = messages[latest_user_index + 1:]
+
     tool_messages = [
         message
-        for message in messages
-        if message["role"] == "tool"
+        for message in current_turn_messages
+        if message.get("role") == "tool"
     ]
 
     # If no tool result exists, request payment metrics.
@@ -100,6 +112,8 @@ def run_agent(
     user_input: str,
     *,
     principal_role: str,
+    session_id: str,
+    session_manager: SessionManager,
 ) -> str:
     """
     Run the agent using a trusted application-supplied role.
@@ -108,12 +122,25 @@ def run_agent(
     not from the LLM or user-provided text.
     """
 
-    messages: list[dict[str, Any]] = [
-        {
-            "role": "user",
-            "content": user_input,
-        }
-    ]
+    # messages: list[dict[str, Any]] = [
+    #     {
+    #         "role": "user",
+    #         "content": user_input,
+    #     }
+    # ]
+    messages = session_manager.get_history(session_id)
+
+    new_message = {
+        "role": "user",
+        "content": user_input,
+    }
+
+    messages.append(new_message)
+
+    session_manager.add_user_message(
+        session_id,
+        user_input,
+    )
 
     for step in range(MAX_STEPS):
 
@@ -131,6 +158,11 @@ def run_agent(
 
             if not isinstance(content, str):
                 raise ValueError("Final answer must be a string")
+
+            session_manager.add_assistant_message(
+                session_id,
+                content,
+            )
 
             return content
 
@@ -177,27 +209,44 @@ def run_agent(
             }
 
         # Append the result so the LLM can use it next.
-        messages.append({
+        tool_message = {
             "role": "tool",
             "content": tool_result,
             "trust_level": "untrusted",
-        })
+        }
 
-    return (
-    "I couldn't complete the request because "
-    f"the execution limit of {MAX_STEPS} steps was reached."
-)
+        session_manager.add_message(
+            session_id,
+            tool_message,
+        )
+
+        messages.append(tool_message)
+
+    content = (
+        "I couldn't complete the request because "
+        f"the execution limit of {MAX_STEPS} steps was reached."
+    )
+
+    session_manager.add_assistant_message(
+        session_id,
+        content,
+    )
+
+    return content
 
 
 # ---------- 3. Run experiments ----------
 
 def demo() -> None:
+    session_manager = SessionManager()
 
     print("\nCASE 1 — Authorized caller")
 
     answer = run_agent(
         "Why is payment-api slow?",
         principal_role="on_call_engineer",
+        session_id=session_manager.create_session(),
+        session_manager=session_manager,
     )
 
     print(answer)
@@ -207,6 +256,8 @@ def demo() -> None:
     answer = run_agent(
         "Why is payment-api slow?",
         principal_role="customer",
+        session_id=session_manager.create_session(),
+        session_manager=session_manager,
     )
 
     print(answer)

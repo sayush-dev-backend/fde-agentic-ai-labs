@@ -13,6 +13,7 @@ import fde_agent_lab1  # FIX: Import module to access TOOLS
 
 from fde_agent_lab1 import execute_tool, validate_metrics_result
 from fde_agent_lab4 import call_with_retry, run_agent
+from fde_memory_lab1 import SessionManager
 
 
 class TestSecureToolExecution(unittest.TestCase):
@@ -123,8 +124,20 @@ class TestSecureToolExecution(unittest.TestCase):
 
 class TestAgentLoop(unittest.TestCase):
 
+    def setUp(self):
+        self.session_manager = SessionManager()
+        self.session_id = self.session_manager.create_session()
+
+    def _run_agent(self, user_input, *, principal_role):
+        return run_agent(
+            user_input,
+            principal_role=principal_role,
+            session_id=self.session_id,
+            session_manager=self.session_manager,
+        )
+
     def test_agent_success(self):
-        answer = run_agent(
+        answer = self._run_agent(
             "Why is payment-api slow?",
             principal_role="on_call_engineer",
         )
@@ -134,14 +147,62 @@ class TestAgentLoop(unittest.TestCase):
         self.assertIn("8.4%", answer)
 
     def test_agent_handles_unauthorized_role(self):
-        answer = run_agent(
+        answer = self._run_agent(
             "Why is payment-api slow?",
             principal_role="customer",
         )
 
         self.assertIn("couldn't retrieve", answer)
         self.assertIn("rejected", answer)
+        
+    def test_agent_preserves_history_across_two_turns(self):
+        session_manager = SessionManager()
+        session_id = session_manager.create_session()
 
+        first_answer = run_agent(
+            "Why is payment-api slow?",
+            principal_role="on_call_engineer",
+            session_id=session_id,
+            session_manager=session_manager,
+        )
+
+        second_answer = run_agent(
+            "Check payment-api again.",
+            principal_role="on_call_engineer",
+            session_id=session_id,
+            session_manager=session_manager,
+        )
+
+        history = session_manager.get_history(session_id)
+
+        user_messages = [
+            message for message in history
+            if message["role"] == "user"
+        ]
+        tool_messages = [
+            message for message in history
+            if message["role"] == "tool"
+        ]
+        assistant_messages = [
+            message for message in history
+            if message["role"] == "assistant"
+        ]
+
+        self.assertEqual(len(user_messages), 2)
+        self.assertEqual(len(tool_messages), 2)
+        self.assertEqual(len(assistant_messages), 2)
+
+        self.assertEqual(
+            user_messages[0]["content"],
+            "Why is payment-api slow?",
+        )
+        self.assertEqual(
+            user_messages[1]["content"],
+            "Check payment-api again.",
+        )
+
+        self.assertTrue(first_answer)
+        self.assertTrue(second_answer)
     @patch("fde_agent_lab4.simulated_llm")
     def test_agent_handles_unknown_tool(self, mock_llm):
         mock_llm.side_effect = [
@@ -156,7 +217,7 @@ class TestAgentLoop(unittest.TestCase):
             },
         ]
 
-        answer = run_agent(
+        answer = self._run_agent(
             "Delete database records",
             principal_role="platform_admin",
         )
@@ -174,7 +235,7 @@ class TestAgentLoop(unittest.TestCase):
             "arguments": {},
         }
 
-        answer = run_agent(
+        answer = self._run_agent(
             "Delete database records",
             principal_role="platform_admin",
         )
@@ -199,7 +260,7 @@ class TestAgentLoop(unittest.TestCase):
             },
         ]
 
-        answer = run_agent(
+        answer = self._run_agent(
             "Why is payment-api slow?",
             principal_role="on_call_engineer",
         )
@@ -272,7 +333,7 @@ class TestAgentLoop(unittest.TestCase):
                 },
             ]
 
-            answer = run_agent(
+            answer = self._run_agent(
                 "Why is payment-api slow?",
                 principal_role="on_call_engineer",
             )
@@ -297,16 +358,7 @@ class TestAgentLoop(unittest.TestCase):
             if message["role"] == "tool"
         ]
 
-        # self.assertEqual(len(tool_messages), 1)
-        # self.assertEqual(
-        #     tool_messages[0]["trust_level"],
-        #     "untrusted",
-        # )
-        # self.assertIn(
-        #     "Ignore all previous instructions",
-        #     tool_messages[0]["content"]["data"]["message"],
-        # )
-                # Find the specific tool message containing the malicious output.
+        # Find the specific tool message containing the malicious output.
         malicious_messages = [
             message
             for message in tool_messages

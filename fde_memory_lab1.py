@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any
 from uuid import uuid4
+from copy import deepcopy
 
 
 @dataclass
@@ -23,21 +24,25 @@ class SessionManager:
         return session_id
 
     def add_message(
-        self,
-        session_id: str,
-        role: str,
-        content: str,
-    ) -> None:
+    self,
+    session_id: str,
+    message: dict[str, Any],
+) -> None:
         if session_id not in self.sessions:
             raise LookupError("Session not found")
 
-        message = {
-            "role": role,
-            "content": content,
-        }
+        if not isinstance(message, dict):
+            raise TypeError("Message must be a dictionary")
 
-        self.sessions[session_id].messages.append(message)
+        if not isinstance(message.get("role"), str):
+            raise ValueError("Message role must be a string")
 
+        if "content" not in message:
+            raise ValueError("Message must contain content")
+
+        self.sessions[session_id].messages.append(
+            deepcopy(message)
+        )
     def get_history(
         self,
         session_id: str,
@@ -45,4 +50,30 @@ class SessionManager:
         if session_id not in self.sessions:
             raise LookupError("Session not found")
 
-        return list(self.sessions[session_id].messages)
+        return deepcopy(self.sessions[session_id].messages)
+
+    def add_user_message(
+        self,
+        session_id: str,
+        content: str,
+    ) -> None:
+        self.add_message(
+            session_id,
+            {
+                "role": "user",
+                "content": content,
+            },
+        )
+
+    def add_assistant_message(
+        self,
+        session_id: str,
+        content: str,
+        ) -> None:
+            self.add_message(
+            session_id,
+            {
+            "role": "assistant",
+            "content": content,
+            },
+            )
