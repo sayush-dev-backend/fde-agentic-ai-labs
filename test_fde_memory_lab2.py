@@ -1,45 +1,68 @@
 import unittest
+
 from fde_memory_lab2 import LongTermMemory
+
 
 class TestLongTermMemory(unittest.TestCase):
     def setUp(self):
         self.memory = LongTermMemory()
 
     def test_remember_and_recall(self):
-        self.memory.remember("user1", "preferred_language", "Python")
-        self.assertEqual(self.memory.recall("user1", "preferred_language"), "Python")
+        self.memory.remember("user-1", "preferred_language", "Python")
+        self.assertEqual(
+            self.memory.recall("user-1", "preferred_language"),
+            "Python",
+        )
 
     def test_forget(self):
-        self.memory.remember("user1", "key2", "value2")
-        self.memory.forget("user1", "key2")
-        self.assertIsNone(self.memory.recall("user1", "key2"))
+        self.memory.remember("user-1", "preferred_language", "Python")
+        self.memory.forget("user-1", "preferred_language")
+        self.assertIsNone(
+            self.memory.recall("user-1", "preferred_language")
+        )
 
-    def test_recall_nonexistent_key(self):
-        self.assertIsNone(self.memory.recall("user1", "nonexistent_key"))
+    def test_forgetting_missing_key_is_safe(self):
+        self.memory.forget("user-1", "missing")
+        self.assertIsNone(self.memory.recall("user-1", "missing"))
+
+    def test_recall_missing_user_or_key_returns_none(self):
+        self.assertIsNone(self.memory.recall("unknown-user", "key"))
+        self.memory.remember("user-1", "known", "value")
+        self.assertIsNone(self.memory.recall("user-1", "missing"))
 
     def test_remember_overwrites_existing_value(self):
-        self.memory.remember("user1", "preferred_language", "Python")
-        self.memory.remember("user1", "preferred_language", "JavaScript")
-        self.assertEqual(self.memory.recall("user1", "preferred_language"), "JavaScript")
+        self.memory.remember("user-1", "preferred_language", "Python")
+        self.memory.remember("user-1", "preferred_language", "Rust")
+        self.assertEqual(
+            self.memory.recall("user-1", "preferred_language"),
+            "Rust",
+        )
 
     def test_memory_isolation_between_instances(self):
-        memory1 = LongTermMemory()
-        memory2 = LongTermMemory()
-        memory1.remember("user1", "key1", "value1")
-        memory2.remember("user2", "key2", "value2")
-        self.assertEqual(memory1.recall("user1", "key1"), "value1")
-        self.assertEqual(memory2.recall("user2", "key2"), "value2")
-        self.assertIsNone(memory2.recall("user1", "key1"))
-   
-    def test_memory_isolation_between_users(self):
-        self.memory.remember("user1", "preferred_language", "Python")
-        self.memory.remember("user2", "preferred_language", "Java")
+        first = LongTermMemory()
+        second = LongTermMemory()
+        first.remember("user-1", "key", "value")
+        self.assertEqual(first.recall("user-1", "key"), "value")
+        self.assertIsNone(second.recall("user-1", "key"))
 
+    def test_users_are_isolated(self):
+        self.memory.remember("user-1", "preferred_language", "Python")
+        self.memory.remember("user-2", "preferred_language", "Java")
         self.assertEqual(
-            self.memory.recall("user1", "preferred_language"),
+            self.memory.recall("user-1", "preferred_language"),
             "Python",
         )
         self.assertEqual(
-            self.memory.recall("user2", "preferred_language"),
+            self.memory.recall("user-2", "preferred_language"),
             "Java",
         )
+
+    def test_empty_user_id_and_key_are_rejected(self):
+        with self.assertRaises(ValueError):
+            self.memory.remember("", "key", "value")
+        with self.assertRaises(ValueError):
+            self.memory.remember("user-1", " ", "value")
+
+
+if __name__ == "__main__":
+    unittest.main()
