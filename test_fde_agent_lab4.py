@@ -14,6 +14,7 @@ import fde_agent_lab1  # FIX: Import module to access TOOLS
 from fde_agent_lab1 import execute_tool, validate_metrics_result
 from fde_agent_lab4 import call_with_retry, run_agent
 from fde_memory_lab1 import SessionManager
+from fde_memory_lab2 import LongTermMemory
 
 
 class TestSecureToolExecution(unittest.TestCase):
@@ -135,6 +136,73 @@ class TestAgentLoop(unittest.TestCase):
             session_id=self.session_id,
             session_manager=self.session_manager,
         )
+
+    def test_preference_is_recalled_in_a_different_session(self):
+        memory = LongTermMemory()
+        first_session = self.session_manager.create_session()
+        second_session = self.session_manager.create_session()
+
+        saved = run_agent(
+            "My preferred programming language is Python.",
+            principal_role="customer",
+            session_id=first_session,
+            session_manager=self.session_manager,
+            long_term_memory=memory,
+            user_id="user-1",
+        )
+        recalled = run_agent(
+            "What is my preferred programming language?",
+            principal_role="customer",
+            session_id=second_session,
+            session_manager=self.session_manager,
+            long_term_memory=memory,
+            user_id="user-1",
+        )
+
+        self.assertIn("remember", saved)
+        self.assertEqual(
+            recalled,
+            "Your preferred programming language is Python.",
+        )
+        self.assertEqual(
+            self.session_manager.get_history(second_session)[-1]["content"],
+            recalled,
+        )
+
+    def test_preference_is_isolated_between_users(self):
+        memory = LongTermMemory()
+        session_a = self.session_manager.create_session()
+        session_b = self.session_manager.create_session()
+
+        run_agent(
+            "My preferred programming language is Python.",
+            principal_role="customer",
+            session_id=session_a,
+            session_manager=self.session_manager,
+            long_term_memory=memory,
+            user_id="user-1",
+        )
+        answer = run_agent(
+            "What is my preferred programming language?",
+            principal_role="customer",
+            session_id=session_b,
+            session_manager=self.session_manager,
+            long_term_memory=memory,
+            user_id="user-2",
+        )
+
+        self.assertIn("don't have", answer)
+
+    def test_memory_requires_trusted_user_id(self):
+        with self.assertRaises(ValueError):
+            run_agent(
+                "What is my preferred programming language?",
+                principal_role="customer",
+                session_id=self.session_id,
+                session_manager=self.session_manager,
+                long_term_memory=LongTermMemory(),
+                user_id=" ",
+            )
 
     def test_agent_success(self):
         answer = self._run_agent(
