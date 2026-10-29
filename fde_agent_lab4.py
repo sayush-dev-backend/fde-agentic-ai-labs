@@ -32,7 +32,7 @@ _PREFERRED_LANGUAGE_KEY = "preferred_programming_language"
 def _extract_preferred_language(user_input: str) -> str | None:
     """Extract a preference only from an explicit, narrow statement."""
     match = re.search(
-        r"\\bmy\\s+preferred\\s+programming\\s+language\\s+(?:is|=)\\s*([A-Za-z][A-Za-z0-9+#.-]*)\\b?",
+        r"\bmy\s+preferred\s+programming\s+language\s+(?:is|=)\s*([A-Za-z][A-Za-z0-9+#.-]*)(?=\s|[.,!?;:]|$)",
         user_input,
         flags=re.IGNORECASE,
     )
@@ -318,29 +318,25 @@ def demo() -> None:
     session_manager = SessionManager()
     long_term_memory = LongTermMemory()
 
-    print("\nCASE 1 — Authorized caller")
-
-    answer = run_agent(
+    print("\\nCASE 1 — Authorized caller")
+    print(run_agent(
         "Why is payment-api slow?",
         principal_role="on_call_engineer",
         session_id=session_manager.create_session(),
         session_manager=session_manager,
-    )
+        long_term_memory=long_term_memory,
+        user_id="demo-user",
+    ))
 
-    print(answer)
-
-    print("\nCASE 2 — Unauthorized caller")
-
-    answer = run_agent(
+    print("\\nCASE 2 — Unauthorized caller")
+    print(run_agent(
         "Why is payment-api slow?",
         principal_role="customer",
         session_id=session_manager.create_session(),
         session_manager=session_manager,
         long_term_memory=long_term_memory,
         user_id="demo-user",
-    )
-
-    print(answer)
+    ))
 
     print("\\nCASE 3 — Save and recall a preference across sessions")
     print(run_agent(
