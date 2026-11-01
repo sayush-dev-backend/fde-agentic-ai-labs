@@ -2,48 +2,70 @@
 
 **Building, testing, and understanding agentic AI systems through hands-on engineering labs.**
 
-This repository documents my journey toward becoming a Forward Deployed Engineer (FDE), with a focus on AI agents, tool orchestration, memory, validation, and reliable software engineering.
+This repository documents my journey toward becoming a Forward Deployed Engineer (FDE). The focus is on understanding how tool-based agents work and how to engineer them to be reliable, secure, testable, and maintainable.
 
-Rather than treating AI agents as black boxes, I am building their core components incrementally to understand how they work, how they fail, and how to make them more reliable.
+Rather than treating agents as black boxes, I build their components incrementally, test their behavior, and document the engineering decisions behind them.
 
 ## Objectives
 
-- Understand the architecture of tool-based AI agents.
-- Implement tool selection and execution workflows.
-- Explore dynamic tool argument passing.
-- Build memory components for agentic systems.
-- Validate inputs and outputs.
-- Write automated tests for correctness and failure handling.
-- Progress toward secure, observable, and production-ready AI systems.
+- Understand the execution flow of tool-based agents.
+- Implement tool registration, selection, argument passing, and execution.
+- Validate tool requests and results and handle failures safely.
+- Build session and long-term memory with user-scoped access.
+- Compare in-process and persistent storage implementations.
+- Use Protocols and dependency injection to decouple agent logic from storage.
+- Apply automated testing and static type checking.
+- Progress toward secure, observable, production-oriented agent systems.
 
-## Current Labs
+## Current Progress
 
-| Lab | Focus | Status |
-|---|---|---|
-| Agent Lab 1 | Initial agent implementation | Implemented; documentation pending |
-| Agent Lab 2 | Agent architecture and behavior | Implemented; documentation pending |
-| Agent Lab 3 | Further agent implementation | Implemented; documentation pending |
-| Agent Lab 4 | Tool execution, argument passing, and validation | Implemented; automated tests available |
-| Memory Lab 1 | Initial agent memory implementation | Implemented; automated tests available |
+| Area | What has been implemented |
+|---|---|
+| Agent fundamentals | Initial agent execution flow and simulated model decisions |
+| Tool execution | Tool lookup and execution, argument passing, and execution through a security boundary |
+| Validation and control | Action validation, tool argument checks, error handling, and an execution-step limit |
+| Session memory | Session creation and structured conversation history |
+| In-process long-term memory | User-scoped remember, recall, and forget operations |
+| Persistent memory | SQLite-backed storage with JSON serialization and persistence across instances |
+| Agent-memory integration | Long-term memory integrated into the agent for a narrow preferred-language example |
+| Storage abstraction | A `MemoryStore` Protocol shared by the in-process and SQLite implementations |
+| Quality checks | `unittest` coverage and Mypy static type checking |
 
-*The precise learning objectives for each lab will be documented as the implementations are reviewed.*
+These are incremental learning implementations. They are not yet a complete production agent framework.
+
+## Memory Architecture
+
+The memory work currently has three main pieces:
+
+- **Session memory** — maintains conversation history for a session.
+- **In-process long-term memory** — stores user-scoped values in Python dictionaries. It is simple to inspect, but data does not survive process restarts.
+- **SQLite long-term memory** — persists JSON-compatible values in a database and can be accessed by a new storage instance.
+
+The agent depends on the `MemoryStore` Protocol rather than a specific storage class. This allows a compatible implementation to be supplied by the application at the composition point (dependency injection), keeping storage selection separate from agent orchestration.
+
+The current agent-memory demonstration saves and recalls a user's explicitly stated preferred programming language. This is a focused learning example, not a general-purpose memory extraction or retrieval system.
 
 ## Repository Structure
+
+The repository is organized around individual learning labs, their tests, and supporting documentation. Key modules include:
 
 ```text
 fde-agentic-ai-labs/
 ├── README.md
-├── .gitignore
-├── requirements.txt
 ├── docs/
 │   └── learning-roadmap.md
 ├── fde_agent_lab1.py
 ├── fde_agent_lab2.py
 ├── fde_agent_lab3.py
 ├── fde_agent_lab4.py
+├── fde_memory_interfaces.py
 ├── fde_memory_lab1.py
+├── fde_memory_lab2.py
+├── fde_memory_lab3.py
 ├── test_fde_agent_lab4.py
-└── test_fde_memory_lab1.py
+├── test_fde_memory_lab2.py
+├── test_fde_memory_lab3.py
+└── test_protocol_experiment.py
 ```
 
 ## Getting Started
@@ -52,7 +74,6 @@ fde-agentic-ai-labs/
 
 - Python 3.10 or later
 - Git
-- `pytest` for running the automated test suite
 
 ### Setup
 
@@ -70,44 +91,39 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install the testing dependency:
+### Run the tests
+
+The project uses Python's built-in `unittest` framework:
 
 ```bash
-python -m pip install pytest
+python -m unittest discover -v
 ```
 
-### Run the Tests
+### Run static type checking
+
+Mypy is used as a development-time static type checker. Install it in the active virtual environment if it is not already installed:
 
 ```bash
-python -m pytest -v
+python -m pip install mypy
+python -m mypy .
 ```
 
 ## Engineering Principles
 
-My approach to building agentic systems emphasizes:
-
 - **Understandability:** Know what each component does and why it exists.
-- **Correctness:** Validate behavior instead of relying on assumptions.
-- **Reliability:** Test invalid inputs, unexpected outputs, and failure scenarios.
-- **Security:** Treat tool execution and external inputs as trust boundaries.
+- **Correctness:** Validate behavior rather than relying on assumptions.
+- **Testability:** Test expected behavior, invalid inputs, and failure scenarios.
+- **Separation of concerns:** Keep agent orchestration separate from storage implementation.
+- **Security:** Treat tool execution, user identity, and external inputs as trust boundaries.
 - **Incremental development:** Build a working foundation before introducing complexity.
 - **Production thinking:** Consider observability, maintainability, and operational risks.
 
 ## Roadmap
 
-- [x] Implement initial agent labs.
-- [x] Implement an initial memory lab.
-- [x] Add automated tests for selected labs.
-- [ ] Document each lab's architecture and learning objectives.
-- [ ] Expand test coverage across the agent and memory components.
-- [ ] Implement safer tool execution and argument validation.
-- [ ] Explore persistent memory and retrieval.
-- [ ] Add structured logging and observability.
-- [ ] Build an end-to-end agentic workflow.
-- [ ] Develop deployment and production-readiness practices.
+See [docs/learning-roadmap.md](docs/learning-roadmap.md) for completed work and the next learning stages.
 
 ## Philosophy
 
 > An AI system is not finished when it produces an answer. It is finished when its behavior is understood, its failures are handled, and its reliability can be tested.
 
-This repository is a work in progress. Each lab represents a step toward building AI systems that solve real problems reliably.
+This repository is a work in progress. Each lab is a step toward building AI systems that solve real problems reliably.
