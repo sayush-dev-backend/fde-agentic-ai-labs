@@ -6,6 +6,8 @@ Run:
 """
 
 import unittest
+import tempfile
+from pathlib import Path
 from dataclasses import replace  # FIX: Import replace
 from unittest.mock import patch
 
@@ -15,6 +17,7 @@ from fde_agent_lab1 import execute_tool, validate_metrics_result
 from fde_agent_lab4 import call_with_retry, run_agent
 from fde_memory_lab1 import SessionManager
 from fde_memory_lab2 import LongTermMemory
+from fde_memory_lab3 import LongTermMemorySQLite
 
 
 class TestSecureToolExecution(unittest.TestCase):
@@ -192,6 +195,63 @@ class TestAgentLoop(unittest.TestCase):
         )
 
         self.assertIn("don't have", answer)
+
+    def test_sqlite_preference_survives_new_memory_instance_and_session(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            database_path = Path(temp_dir) / "agent-memory.db"
+            first_memory = LongTermMemorySQLite(database_path)
+            first_session = self.session_manager.create_session()
+
+            saved = run_agent(
+                "My preferred programming language is Python.",
+                principal_role="customer",
+                session_id=first_session,
+                session_manager=self.session_manager,
+                long_term_memory=first_memory,
+                user_id="user-1",
+            )
+
+            # Simulate a fresh application memory object reading the same DB.
+            restarted_memory = LongTermMemorySQLite(database_path)
+            second_session = self.session_manager.create_session()
+            recalled = run_agent(
+                "What is my preferred programming language?",
+                principal_role="customer",
+                session_id=second_session,
+                session_manager=self.session_manager,
+                long_term_memory=restarted_memory,
+                user_id="user-1",
+            )
+
+            self.assertIn("remember", saved)
+            self.assertEqual(
+                recalled,
+                "Your preferred programming language is Python.",
+            )
+
+    def test_sqlite_memory_remains_isolated_between_users(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            database_path = Path(temp_dir) / "agent-memory.db"
+            memory = LongTermMemorySQLite(database_path)
+
+            run_agent(
+                "My preferred programming language is Python.",
+                principal_role="customer",
+                session_id=self.session_manager.create_session(),
+                session_manager=self.session_manager,
+                long_term_memory=memory,
+                user_id="user-1",
+            )
+            answer = run_agent(
+                "What is my preferred programming language?",
+                principal_role="customer",
+                session_id=self.session_manager.create_session(),
+                session_manager=self.session_manager,
+                long_term_memory=LongTermMemorySQLite(database_path),
+                user_id="user-2",
+            )
+
+            self.assertIn("don't have", answer)
 
     def test_memory_requires_trusted_user_id(self):
         with self.assertRaises(ValueError):

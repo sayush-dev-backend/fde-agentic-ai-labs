@@ -17,6 +17,7 @@ from typing import Any, Callable
 from fde_agent_lab1 import execute_tool
 from fde_memory_lab1 import SessionManager
 from fde_memory_lab2 import LongTermMemory
+from fde_memory_lab3 import LongTermMemorySQLite
 
 
 MAX_STEPS = 3
@@ -155,7 +156,7 @@ def run_agent(
     principal_role: str,
     session_id: str,
     session_manager: SessionManager,
-    long_term_memory: LongTermMemory | None = None,
+    long_term_memory: LongTermMemory | LongTermMemorySQLite | None = None,
     user_id: str | None = None,
 ) -> str:
     """
