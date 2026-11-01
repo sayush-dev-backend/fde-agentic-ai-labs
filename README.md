@@ -8,25 +8,24 @@ Rather than treating AI agents as black boxes, I am building their core componen
 
 ## Objectives
 
-- Understand the architecture of tool-based AI agents.
-- Implement tool selection and execution workflows.
-- Explore dynamic tool argument passing.
-- Build memory components for agentic systems.
-- Validate inputs and outputs.
-- Write automated tests for correctness and failure handling.
-- Progress toward secure, observable, and production-ready AI systems.
+- Understand the architecture and execution flow of tool-based AI agents.
+- Implement tool selection, registration, authorization, and execution.
+- Explore dynamic tool argument passing and validation.
+- Build session-scoped and user-scoped long-term memory.
+- Add persistent storage and test memory isolation.
+- Validate inputs and outputs and handle failures predictably.
+- Progress toward observable and production-ready AI systems.
 
 ## Current Labs
 
 | Lab | Focus | Status |
 |---|---|---|
-| Agent Lab 1 | Initial agent implementation | Implemented; documentation pending |
-| Agent Lab 2 | Agent architecture and behavior | Implemented; documentation pending |
-| Agent Lab 3 | Further agent implementation | Implemented; documentation pending |
-| Agent Lab 4 | Tool execution, argument passing, and validation | Implemented; automated tests available |
-| Memory Lab 1 | Initial agent memory implementation | Implemented; automated tests available |
-
-*The precise learning objectives for each lab will be documented as the implementations are reviewed.*
+| Agent Labs 1–3 | Agent foundations and execution flow | Implemented |
+| Agent Lab 4 | Tool execution, argument passing, validation, permissions, retries, execution limits, and agent loop | Implemented; tests available |
+| Memory Lab 1 | Session-based conversation history | Implemented; tests available |
+| Memory Lab 2 | In-process, user-scoped long-term memory | Implemented; tests available |
+| Memory Lab 3 | SQLite-backed persistent, user-scoped memory | Implemented; tests available |
+| Agent + SQLite integration | Inject persistent memory into the agent and verify cross-session retrieval and user isolation | Implemented on the integration branch; 47 local tests passed |
 
 ## Repository Structure
 
@@ -42,8 +41,12 @@ fde-agentic-ai-labs/
 ├── fde_agent_lab3.py
 ├── fde_agent_lab4.py
 ├── fde_memory_lab1.py
+├── fde_memory_lab2.py
+├── fde_memory_lab3.py
 ├── test_fde_agent_lab4.py
-└── test_fde_memory_lab1.py
+├── test_fde_memory_lab1.py
+├── test_fde_memory_lab2.py
+└── test_fde_memory_lab3.py
 ```
 
 ## Getting Started
@@ -52,7 +55,8 @@ fde-agentic-ai-labs/
 
 - Python 3.10 or later
 - Git
-- `pytest` for running the automated test suite
+
+The current test suite uses Python's built-in `unittest` framework. No third-party testing package is required.
 
 ### Setup
 
@@ -63,28 +67,38 @@ git clone https://github.com/sayush-dev-backend/fde-agentic-ai-labs.git
 cd fde-agentic-ai-labs
 ```
 
-Create and activate a virtual environment:
+Create and activate a virtual environment (recommended):
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install the testing dependency:
-
-```bash
-python -m pip install pytest
-```
-
 ### Run the Tests
 
+Run the complete test suite from the repository root:
+
 ```bash
-python -m pytest -v
+python3 -m unittest discover -v
 ```
 
-## Engineering Principles
+To run a specific test module:
 
-My approach to building agentic systems emphasizes:
+```bash
+python3 -m unittest -v test_fde_agent_lab4.py
+```
+
+## Memory Architecture
+
+The project currently contains three complementary memory layers:
+
+- **Session memory:** `SessionManager` stores structured conversation messages within a session.
+- **In-process long-term memory:** `LongTermMemory` stores user-scoped key/value preferences in application memory. Data does not survive process restarts.
+- **Persistent long-term memory:** `LongTermMemorySQLite` stores JSON-compatible user-scoped values in SQLite, allowing data to survive new memory instances and application restarts when they use the same database file.
+
+The agent accepts either long-term memory implementation through dependency injection. The caller supplies a trusted `user_id`; the agent does not infer identity from user text.
+
+## Engineering Principles
 
 - **Understandability:** Know what each component does and why it exists.
 - **Correctness:** Validate behavior instead of relying on assumptions.
@@ -96,14 +110,15 @@ My approach to building agentic systems emphasizes:
 ## Roadmap
 
 - [x] Implement initial agent labs.
-- [x] Implement an initial memory lab.
-- [x] Add automated tests for selected labs.
-- [ ] Document each lab's architecture and learning objectives.
-- [ ] Expand test coverage across the agent and memory components.
-- [ ] Implement safer tool execution and argument validation.
-- [ ] Explore persistent memory and retrieval.
-- [ ] Add structured logging and observability.
-- [ ] Build an end-to-end agentic workflow.
+- [x] Implement session-based memory.
+- [x] Implement in-process user-scoped long-term memory.
+- [x] Implement SQLite-backed persistent memory.
+- [x] Integrate persistent memory with the agent and test cross-session retrieval and user isolation.
+- [x] Add automated tests for agent and memory components using `unittest`.
+- [ ] Document each lab's architecture and learning objectives in greater depth.
+- [ ] Expand security, concurrency, and failure-mode testing.
+- [ ] Add structured logging, tracing, and operational metrics.
+- [ ] Build an end-to-end agentic workflow around a real FDE problem.
 - [ ] Develop deployment and production-readiness practices.
 
 ## Philosophy
