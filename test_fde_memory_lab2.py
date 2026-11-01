@@ -63,6 +63,15 @@ class TestLongTermMemory(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.memory.remember("user-1", " ", "value")
 
+    def test_forget_returns_true_when_key_exists(self):
+        memory = LongTermMemory()
+
+        memory.remember("user-1", "language", "Python")
+
+        result = memory.forget("user-1", "language")
+
+        self.assertTrue(result)
+
 
 if __name__ == "__main__":
     unittest.main()

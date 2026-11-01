@@ -15,6 +15,7 @@ import time
 from typing import Any, Callable
 
 from fde_agent_lab1 import execute_tool
+from fde_memory_interfaces import MemoryStore
 from fde_memory_lab1 import SessionManager
 from fde_memory_lab2 import LongTermMemory
 from fde_memory_lab3 import LongTermMemorySQLite
@@ -156,7 +157,7 @@ def run_agent(
     principal_role: str,
     session_id: str,
     session_manager: SessionManager,
-    long_term_memory: LongTermMemory | LongTermMemorySQLite | None = None,
+    long_term_memory: MemoryStore | None = None,
     user_id: str | None = None,
 ) -> str:
     """
@@ -173,11 +174,13 @@ def run_agent(
     #     }
     # ]
     # Validate trusted identity before persisting the user's message.
+    trusted_user_id: str | None = None
     if long_term_memory is not None:
         if not isinstance(user_id, str) or not user_id.strip():
             raise ValueError(
                 "A trusted, non-empty user_id is required when long-term memory is enabled"
             )
+        trusted_user_id = user_id
 
     messages = session_manager.get_history(session_id)
     messages.append({
@@ -192,8 +195,9 @@ def run_agent(
 
         preferred_language = _extract_preferred_language(user_input)
         if preferred_language is not None:
+            assert trusted_user_id is not None
             long_term_memory.remember(
-                user_id,
+                trusted_user_id,
                 _PREFERRED_LANGUAGE_KEY,
                 preferred_language,
             )
@@ -204,8 +208,9 @@ def run_agent(
             )
 
         if _asks_for_preferred_language(user_input):
+            assert trusted_user_id is not None
             saved_language = long_term_memory.recall(
-                user_id,
+                trusted_user_id,
                 _PREFERRED_LANGUAGE_KEY,
             )
             if saved_language is None:
@@ -227,17 +232,17 @@ def run_agent(
 
         # Handle a final answer.
         if action_type == "final":
-            content = action.get("content")
+            raw_content = action.get("content")
 
-            if not isinstance(content, str):
+            if not isinstance(raw_content, str):
                 raise ValueError("Final answer must be a string")
 
             session_manager.add_assistant_message(
                 session_id,
-                content,
+                raw_content,
             )
 
-            return content
+            return raw_content
 
         # Reject unsupported actions.
         if action_type != "tool_call":
@@ -249,6 +254,8 @@ def run_agent(
 
         if not isinstance(tool_name, str):
             raise ValueError("Tool name must be a string")
+        if not isinstance(arguments, dict):
+            raise ValueError("Tool arguments must be a dictionary")
 
         # Execute through Lab 1's security boundary.
         try:

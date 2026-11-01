@@ -79,12 +79,14 @@ class LongTermMemorySQLite:
             return None
         return json.loads(row[0])
 
-    def forget(self, user_id: str, key: str) -> None:
+    def forget(self, user_id: str, key: str) -> bool:
         self._validate_identity(user_id, key)
 
         with closing(sqlite3.connect(self.database_path)) as connection:
             with connection:
-                connection.execute(
+                cursor = connection.cursor()
+                cursor.execute(
                     "DELETE FROM memories WHERE user_id = ? AND key = ?",
                     (user_id, key),
                 )
+                return cursor.rowcount > 0           

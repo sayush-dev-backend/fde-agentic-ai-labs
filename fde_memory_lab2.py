@@ -29,14 +29,15 @@ class LongTermMemory:
 
         return self.memories.get(user_id, {}).get(key)
 
-    def forget(self, user_id: str, key: str) -> None:
+    def forget(self, user_id: str, key: str) -> bool:
         if not isinstance(user_id, str) or not user_id.strip():
             raise ValueError("user_id must be a non-empty string")
         if not isinstance(key, str) or not key.strip():
             raise ValueError("key must be a non-empty string")
 
-        user_memories = self.memories.get(user_id)
-        if user_memories is not None:
-            user_memories.pop(key, None)
-            if not user_memories:
-                self.memories.pop(user_id, None)
+        user_memories = self.memories.get(user_id,{})
+        if key in user_memories:
+            del user_memories[key]
+            return True
+        
+        return False

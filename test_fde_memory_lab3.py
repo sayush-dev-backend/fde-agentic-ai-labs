@@ -86,6 +86,18 @@ class TestLongTermMemorySQLite(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.memory.remember("user-1", "object", object())
 
+    def test_forget_returns_true_when_key_exists(self):
+        self.memory.remember("user-1", "language", "Python")
+
+        result = self.memory.forget("user-1", "language")
+
+        self.assertTrue(result)
+        
+    def test_forget_returns_false_when_key_does_not_exist(self):
+        result = self.memory.forget("user-1", "nonexistent_key")
+
+        self.assertFalse(result)
+
 
 if __name__ == "__main__":
     unittest.main()

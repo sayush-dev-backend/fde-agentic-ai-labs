@@ -27,6 +27,8 @@ TOOLS = {
     "get_recent_deployments": get_recent_deployments,
 }
 
+MAX_STEPS = 3
+
 # Simulated LLM
 def simulated_llm(messages: list[dict[str, Any]]) -> dict[str, Any]:
     """
