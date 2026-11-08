@@ -52,27 +52,31 @@ The repository is organized around individual learning labs, their tests, and su
 ```text
 fde-agentic-ai-labs/
 ├── README.md
+├── pyproject.toml
 ├── docs/
 │   └── learning-roadmap.md
-├── fde_agent_lab1.py
-├── fde_agent_lab2.py
-├── fde_agent_lab3.py
-├── fde_agent_lab4.py
-├── fde_memory_interfaces.py
-├── fde_memory_lab1.py
-├── fde_memory_lab2.py
-├── fde_memory_lab3.py
-├── test_fde_agent_lab4.py
-├── test_fde_memory_lab2.py
-├── test_fde_memory_lab3.py
-└── test_protocol_experiment.py
+├── src/
+│   └── fde_agent/
+├── labs/
+│   ├── lab_01_agent_fundamentals/
+│   ├── lab_02_memory/
+│   ├── lab_03_context_management/
+│   ├── lab_04_tool_reliability/
+│   └── lab_05_security/
+├── tests/
+│   ├── unit/
+│   └── integration/
+└── examples/
+    └── try_memory.py
 ```
+
+The project uses a `src` layout for the `fde_agent` package. The learning labs remain in the top-level `labs` package so each lab can be run and imported directly. Tests are separated into unit and integration suites.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Python 3.10 or later
+- Python 3.11 or later
 - Git
 
 ### Setup
@@ -91,12 +95,24 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
+Install the project in editable mode. This installs the project dependencies, including `rank-bm25`, and makes the local packages importable from the environment:
+
+```bash
+python -m pip install -e .
+```
+
 ### Run the tests
 
 The project uses Python's built-in `unittest` framework:
 
 ```bash
 python -m unittest discover -v
+```
+
+Run an individual suite when iterating on a specific area:
+
+```bash
+python -m unittest -v tests.integration.test_fde_agent_lab4
 ```
 
 ### Run static type checking

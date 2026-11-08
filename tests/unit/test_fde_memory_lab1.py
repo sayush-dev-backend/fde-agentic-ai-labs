@@ -1,6 +1,6 @@
 import unittest
 
-from fde_memory_lab1 import SessionManager
+from labs.lab_02_memory.fde_memory_lab1 import SessionManager
 
 
 class TestSessionManager(unittest.TestCase):

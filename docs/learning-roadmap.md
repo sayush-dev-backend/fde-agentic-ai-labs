@@ -6,6 +6,30 @@ Follow the book's overall progression while organizing each topic around the FDE
 
 The goal is not to add technologies for the sake of appearances. Each concept should be understood, implemented when appropriate, tested, and revisited as the agent becomes more complex.
 
+## Project layout and setup
+
+The repository uses a `src` layout for the `fde_agent` package while keeping the learning labs in the top-level `labs` package:
+
+```text
+src/fde_agent/                         Core package namespace
+labs/lab_01_agent_fundamentals/        Agent execution and tool fundamentals
+labs/lab_02_memory/                    Session and long-term memory
+labs/lab_03_context_management/        Context construction and retrieval
+tests/unit/                            Focused component tests
+tests/integration/                     Cross-component agent tests
+examples/                              Runnable learning examples
+```
+
+Create an environment and install the project from the repository root:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+```
+
+The editable install reads dependencies from `pyproject.toml` and ensures imports such as `labs.lab_02_memory.fde_memory_lab1` work regardless of the current test runner.
+
 ## Phase 1: Agent Fundamentals
 
 **Goal:** Understand how an agent decides what action to take and how that action gets executed.
@@ -111,7 +135,7 @@ Planned deliverables:
 
 ## Engineering quality checks
 
-The project uses Python's built-in `unittest` framework for automated tests and Mypy for static type checking.
+The project uses Python's built-in `unittest` framework for automated tests and Mypy for static type checking. The supported Python version is 3.11 or later.
 
 Run the test suite:
 

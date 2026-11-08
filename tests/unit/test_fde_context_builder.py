@@ -3,7 +3,7 @@ import unittest
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 
-from fde_context_builder import ContextBuilder
+from labs.lab_03_context_management.fde_context_builder import ContextBuilder
 
 
 class TestContextBuilder(unittest.TestCase):
