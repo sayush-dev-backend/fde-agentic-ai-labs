@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from fde_memory_lab3 import LongTermMemorySQLite
+from labs.lab_02_memory.fde_memory_lab3 import LongTermMemorySQLite
 
 
 class TestLongTermMemorySQLite(unittest.TestCase):

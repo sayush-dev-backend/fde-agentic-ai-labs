@@ -14,11 +14,11 @@ import re
 import time
 from typing import Any, Callable
 
-from fde_agent_lab1 import execute_tool
-from fde_memory_interfaces import MemoryStore
-from fde_memory_lab1 import SessionManager
-from fde_memory_lab2 import LongTermMemory
-from fde_memory_lab3 import LongTermMemorySQLite
+from labs.lab_01_agent_fundamentals.fde_agent_lab1 import execute_tool
+from labs.lab_02_memory.fde_memory_interfaces import MemoryStore
+from labs.lab_02_memory.fde_memory_lab1 import SessionManager
+from labs.lab_02_memory.fde_memory_lab2 import LongTermMemory
+from labs.lab_02_memory.fde_memory_lab3 import LongTermMemorySQLite
 
 
 MAX_STEPS = 3

@@ -1,5 +1,5 @@
 from typing import Any
-from fde_memory_interfaces import MemoryStore
+from labs.lab_02_memory.fde_memory_interfaces import MemoryStore
 
 
 class BrokenMemory:

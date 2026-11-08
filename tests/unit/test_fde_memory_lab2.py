@@ -1,6 +1,6 @@
 import unittest
 
-from fde_memory_lab2 import LongTermMemory
+from labs.lab_02_memory.fde_memory_lab2 import LongTermMemory
 
 
 class TestLongTermMemory(unittest.TestCase):

@@ -22,3 +22,12 @@ htmlcov/
 .DS_Store
 .vscode/
 .idea/
+
+
+# Type checking
+.mypy_cache/
+
+# Build and packaging artifacts
+*.egg-info/
+build/
+dist/

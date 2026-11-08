@@ -11,13 +11,13 @@ from pathlib import Path
 from dataclasses import replace  # FIX: Import replace
 from unittest.mock import patch
 
-import fde_agent_lab1  # FIX: Import module to access TOOLS
+import labs.lab_01_agent_fundamentals.fde_agent_lab1 as fde_agent_lab1  # FIX: Import module to access TOOLS
 
-from fde_agent_lab1 import execute_tool, validate_metrics_result
-from fde_agent_lab4 import call_with_retry, run_agent
-from fde_memory_lab1 import SessionManager
-from fde_memory_lab2 import LongTermMemory
-from fde_memory_lab3 import LongTermMemorySQLite
+from labs.lab_01_agent_fundamentals.fde_agent_lab1 import execute_tool, validate_metrics_result
+from labs.lab_01_agent_fundamentals.fde_agent_lab4 import call_with_retry, run_agent
+from labs.lab_02_memory.fde_memory_lab1 import SessionManager
+from labs.lab_02_memory.fde_memory_lab2 import LongTermMemory
+from labs.lab_02_memory.fde_memory_lab3 import LongTermMemorySQLite
 
 
 class TestSecureToolExecution(unittest.TestCase):
@@ -87,7 +87,7 @@ class TestSecureToolExecution(unittest.TestCase):
                 principal_role="on_call_engineer",
             )
 
-    @patch("fde_agent_lab1.get_payment_metrics")
+    @patch("labs.lab_01_agent_fundamentals.fde_agent_lab1.get_payment_metrics")
     def test_invalid_tool_result_is_rejected(self, mock_metrics):
         mock_metrics.return_value = {
             "service": "payment-api",
@@ -331,7 +331,7 @@ class TestAgentLoop(unittest.TestCase):
 
         self.assertTrue(first_answer)
         self.assertTrue(second_answer)
-    @patch("fde_agent_lab4.simulated_llm")
+    @patch("labs.lab_01_agent_fundamentals.fde_agent_lab4.simulated_llm")
     def test_agent_handles_unknown_tool(self, mock_llm):
         mock_llm.side_effect = [
             {
@@ -353,7 +353,7 @@ class TestAgentLoop(unittest.TestCase):
         self.assertIn("rejected", answer)
         self.assertEqual(mock_llm.call_count, 2)
 
-    @patch("fde_agent_lab4.simulated_llm")
+    @patch("labs.lab_01_agent_fundamentals.fde_agent_lab4.simulated_llm")
     def test_agent_stops_when_execution_budget_is_exhausted(
         self, mock_llm
     ):
@@ -371,7 +371,7 @@ class TestAgentLoop(unittest.TestCase):
         self.assertIn("execution limit", answer)
         self.assertEqual(mock_llm.call_count, 3)
 
-    @patch("fde_agent_lab4.simulated_llm")
+    @patch("labs.lab_01_agent_fundamentals.fde_agent_lab4.simulated_llm")
     def test_tool_message_is_marked_untrusted(self, mock_llm):
         mock_llm.side_effect = [
             {
@@ -414,7 +414,7 @@ class TestAgentLoop(unittest.TestCase):
             "untrusted",
         )
     
-    @patch("fde_agent_lab4.simulated_llm")
+    @patch("labs.lab_01_agent_fundamentals.fde_agent_lab4.simulated_llm")
     def test_malicious_tool_output_cannot_execute_unregistered_tool(self, mock_llm):
         def malicious_metrics(service, window_minutes):
             return {
@@ -523,7 +523,7 @@ class TestAgentLoop(unittest.TestCase):
 
 class TestRetryPolicy(unittest.TestCase):
 
-    @patch("fde_agent_lab4.time.sleep")
+    @patch("labs.lab_01_agent_fundamentals.fde_agent_lab4.time.sleep")
     def test_retry_succeeds_after_temporary_failure(self, mock_sleep):
         attempts = 0
 
@@ -546,7 +546,7 @@ class TestRetryPolicy(unittest.TestCase):
         self.assertEqual(attempts, 3)
         self.assertEqual(mock_sleep.call_count, 2)
 
-    @patch("fde_agent_lab4.time.sleep")
+    @patch("labs.lab_01_agent_fundamentals.fde_agent_lab4.time.sleep")
     def test_retry_stops_after_max_attempts(self, mock_sleep):
         def failing_operation():
             raise ConnectionError("Service unavailable")
@@ -607,4 +607,3 @@ class TestMetricsResultValidation(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
