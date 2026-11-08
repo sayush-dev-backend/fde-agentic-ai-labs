@@ -95,11 +95,13 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install the project in editable mode. This installs the project dependencies, including `rank-bm25`, and makes the local packages importable from the environment:
+Install the project in editable mode. This installs the project dependencies, including `rank-bm25` and `tiktoken`, and makes the local packages importable from the environment:
 
 ```bash
 python -m pip install -e .
 ```
+
+> If your system Python is managed by Homebrew or another package manager, use a virtual environment as shown above before installing the project. This avoids externally managed-environment errors.
 
 ### Run the tests
 
